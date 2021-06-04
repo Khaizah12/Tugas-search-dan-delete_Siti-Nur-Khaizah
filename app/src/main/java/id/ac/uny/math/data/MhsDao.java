@@ -20,8 +20,11 @@ public interface MhsDao {
     void update(String nama, String alamat, String hp, int id);
 
     // Delete
-    @Query("delete from MhsEntity")
-    void delete();
+    @Query("delete from MhsEntity where id=:id")
+    void delete(int id);
+//  // Delete
+//  @Query("delete from MhsEntity")
+//  void delete();
 
     //Read
     @Query("select * from MhsEntity")

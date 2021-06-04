@@ -10,7 +10,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,11 +27,12 @@ public class MainActivity extends AppCompatActivity {
 
     public static int CRUD_REQ = 222;
 
-    RecyclerView rvMain;
+    LinearLayout linMain;
     FloatingActionButton btnAdd;
-    LinearLayoutManager linearLayoutManager;
-    List<MhsEntity> mhsEntityList = new ArrayList<>();
-    MhsRecyclerAdapter adapter;
+    MaterialButton btnSearch;
+    TextInputEditText searchInput;
+
+    List<MhsEntity> mhsEntityList=new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,30 +42,48 @@ public class MainActivity extends AppCompatActivity {
         intiviews();
         initViewData();
         initaction();
+        btnSearch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) { initViewData();}
+        });
     }
 
-    void updateView(MhsEntity mhsEntity, int position) {
-        adapter.updateItem(mhsEntity, position);
+    void updateView(MhsEntity mhsEntity) {
+       for (int i=0; i<linMain.getChildCount();i++) {
+           if (((ViewItemMhs) linMain.getChildAt(i)).getMhsEntity().getId()==mhsEntity.getId()) {
+               ((ViewItemMhs) linMain.getChildAt(i)).setMhsEntity(mhsEntity);
+               break;
+           }
+       }
     }
 
     void addViewData(MhsEntity mhsEntity) {
-        adapter.addMhs(mhsEntity);
+        ViewItemMhs viewItemMhs=new ViewItemMhs(this);
+        viewItemMhs.setMhsEntity(mhsEntity);
+        linMain.addView(viewItemMhs, 0);
     }
 
     void initViewData() {
         if (mathDatabase.getMhsDao().getMhs() == null) return;
-        mhsEntityList = mathDatabase.getMhsDao().getMhs();
-        adapter.setMhsEntityList(mhsEntityList);
-        adapter.notifyDataSetChanged();
+
+        if (searchInput==null){
+            mhsEntityList=mathDatabase.getMhsDao().getMhs();
+        }
+        else {
+            mhsEntityList=mathDatabase.getMhsDao().getMhs(searchInput.getText().toString());
+        }
+
+        linMain.removeAllViews();
+        for (int i=0; i<mhsEntityList.size(); i++) {
+            addViewData(mhsEntityList.get(i));
+        }
     }
 
     void intiviews() {
         btnAdd = findViewById(R.id.btnAdd);
-        linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-        rvMain = findViewById(R.id.rvMain);
-        rvMain.setLayoutManager(linearLayoutManager);
-        adapter = new MhsRecyclerAdapter();
-        rvMain.setAdapter(adapter);
+        linMain = findViewById(R.id.linMain);
+        btnSearch = findViewById(R.id.btnSearch);
+        searchInput = findViewById(R.id.search);
     }
 
     void initaction() {
@@ -82,13 +103,13 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == CRUD_REQ && resultCode == RESULT_OK) {
             MhsParcel mhsParcel = data.getParcelableExtra("mhsEntity");
             MhsEntity mhsEntity = mhsParcel.toEntity();
-            int position = data.getIntExtra("position", 0);
+
             boolean isNew = data.getBooleanExtra("isNew", false);
 
             if (isNew) {
                 addViewData(mhsEntity);
             } else {
-                updateView(mhsEntity, position);
+                updateView(mhsEntity);
             }
         }
     }
